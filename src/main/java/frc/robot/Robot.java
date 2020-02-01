@@ -8,62 +8,55 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.Joystick;
+//import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
+import edu.wpi.first.cameraserver.CameraServer;
 
 public class Robot extends TimedRobot {
   
-  TalonSRX leftMaster, leftFollower;
-  TalonSRX rightMaster, rightFollower;
+  WPI_TalonSRX leftMaster, leftFollower;
+  WPI_TalonSRX rightMaster, rightFollower;
 
-  //TalonSRX shooter;
-
-  double turn, throttle;
-  double left, right;
   final double turnStrength = 0.85;
 
   Joystick controller;
-
+  DifferentialDrive drivetrain;
 
   public void robotInit() {
-    this.leftMaster = new TalonSRX(3);
-    this.leftFollower = new TalonSRX(4);
-    this.rightMaster = new TalonSRX(1);
-    this.rightFollower = new TalonSRX(2);
+    CameraServer.getInstance().startAutomaticCapture();
+
+    this.leftMaster = new WPI_TalonSRX(3);
+    this.leftFollower = new WPI_TalonSRX(4);
+    this.rightMaster = new WPI_TalonSRX(1);
+    this.rightFollower = new WPI_TalonSRX(2);
 
     this.leftFollower.set(ControlMode.Follower, 3);
     this.rightFollower.set(ControlMode.Follower, 1);
     
-    this.leftMaster.setInverted(true);
-    this.rightMaster.setInverted(true);
+    this.leftMaster.setInverted(false);
+    this.rightMaster.setInverted(false);
+    this.leftFollower.setInverted(false);
+    this.rightFollower.setInverted(false);
 
-
-
-    //this.shooter = new TalonSRX(1);
+    this.drivetrain = new DifferentialDrive(this.leftMaster, this.rightMaster);
+    this.drivetrain.setMaxOutput(0.5);
 
     this.controller = new Joystick(0);
-
-    
   }
   
-
   public void teleopPeriodic() {
-    this.left = this.controller.getRawAxis(1);
-    this.right = this.controller.getRawAxis(4);
+    double speed = -1 * this.controller.getRawAxis(1);
+    double rotation = this.controller.getRawAxis(4);
 
-    /*
-    * this manually does the math for arcade drive given the two trigger inputs
-    * because the Differential drive class doesnt want to work with TalonSRX 
-    */
-    this.turn = (Math.abs(this.right) <= 0.1)? 0. : this.right*this.turnStrength;
-    this.throttle = (Math.abs(this.left) <= 0.12)? 0 : this.left;
+    //this.leftMaster.set(ControlMode.PercentOutput, -1.0);
+    //this.rightMaster.set(ControlMode.PercentOutput, -1.0);
 
-    this.leftMaster.set(ControlMode.PercentOutput, this.throttle + turn);
-    this.rightMaster.set(ControlMode.PercentOutput, -this.throttle + turn);
-
+    this.drivetrain.arcadeDrive(speed, rotation);
     
     /*if(this.controller.getRawButton(2)){
       this.shooter.set(ControlMode.PercentOutput, 1);
